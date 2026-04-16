@@ -1,0 +1,16 @@
+models:
+  - id: "gemini-1.5-pro"
+    provider: "google"
+    cost_per_1k_tokens: 0.00125
+  - id: "gemini-1.5-flash"
+    provider: "google"
+    cost_per_1k_tokens: 0.000075
+  - id: "gpt-4o"
+    provider: "openai"
+    cost_per_1k_tokens: 0.005
+  - id: "gpt-4o-mini"
+    provider: "openai"
+    cost_per_1k_tokens: 0.00015
+
+judge:
+  model_id: "google/gemini-1.5-pro" # the format to initialize the judge
