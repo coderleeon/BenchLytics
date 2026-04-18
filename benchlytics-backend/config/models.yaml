@@ -13,4 +13,4 @@ models:
     cost_per_1k_tokens: 0.00015
 
 judge:
-  model_id: "google/gemini-1.5-pro" # the format to initialize the judge
+  model_id: "gemini-1.5-pro"

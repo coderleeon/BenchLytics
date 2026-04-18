@@ -3,11 +3,16 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional
 import asyncio
+import time
+import logging
 
 from database.session import get_db
 from database.models import Task, ExperimentRun, BenchmarkResult
 from models.llm_manager import llm_manager
 from evaluation.judge import judge_engine
+from utils.logger import log_experiment
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -65,8 +70,9 @@ async def run_experiment(experiment_id: int, task: str, models: List[str], itera
             
         experiment.status = "completed"
         db.commit()
+        logger.info(f"Experiment {experiment_id} successfully completed {iterations} iterations.")
     except Exception as e:
-        print(f"Experiment failed: {e}")
+        logger.error(f"Experiment {experiment_id} failed: {e}")
         db.rollback()
         experiment = db.query(ExperimentRun).filter(ExperimentRun.id == experiment_id).first()
         if experiment:
@@ -76,32 +82,55 @@ async def run_experiment(experiment_id: int, task: str, models: List[str], itera
         db.close()
 
 async def execute_model_evaluation(model_id: str, prompt: str, experiment_id: int, db: Session):
-    # 1. Generation
-    response_text, token_count, latency = await llm_manager.generate_response(model_id, prompt)
-    
-    # 2. Evaluation
-    scores = await judge_engine.evaluate(prompt, response_text)
-    
-    # 3. Cost Tracking
-    cost_per_1k = llm_manager.get_pricing(model_id)
-    total_cost = (token_count / 1000.0) * cost_per_1k
-    
-    # 4. Save to DB
-    result = BenchmarkResult(
-        experiment_id=experiment_id,
-        model_name=model_id,
-        output=response_text,
-        latency_ms=latency,
-        token_count=token_count,
-        cost=total_cost,
-        score_correctness=scores["score_correctness"],
-        score_clarity=scores["score_clarity"],
-        score_reasoning=scores["score_reasoning"],
-        confidence_score=scores["confidence_score"],
-        hallucination_flag=scores["hallucination_flag"]
-    )
-    db.add(result)
-    db.commit()
+    try:
+        # 1. Generation
+        response_text, token_count, latency = await llm_manager.generate_response(model_id, prompt)
+        
+        # 2. Evaluation
+        scores = await judge_engine.evaluate(prompt, response_text)
+        
+        # 3. Cost Tracking
+        cost_per_1k = llm_manager.get_pricing(model_id)
+        total_cost = (token_count / 1000.0) * cost_per_1k
+        
+        # 4. Save to DB
+        result = BenchmarkResult(
+            experiment_id=experiment_id,
+            model_name=model_id,
+            output=response_text,
+            latency_ms=latency,
+            token_count=token_count,
+            cost=total_cost,
+            score_correctness=scores["score_correctness"],
+            score_clarity=scores["score_clarity"],
+            score_reasoning=scores["score_reasoning"],
+            confidence_score=scores["confidence_score"],
+            hallucination_flag=scores["hallucination_flag"]
+        )
+        db.add(result)
+        db.commit()
+        
+        # 5. MLOps Experiment Tracking
+        log_experiment(
+            run_id=f"exp_{experiment_id}_{model_id}_{int(time.time())}",
+            task=prompt,
+            model_name=model_id,
+            output=response_text,
+            scores=scores,
+            latency=latency,
+            status="success"
+        )
+    except Exception as e:
+        logger.error(f"Failed model evaluation for {model_id} on exp {experiment_id}: {e}")
+        log_experiment(
+            run_id=f"exp_{experiment_id}_{model_id}_{int(time.time())}",
+            task=prompt,
+            model_name=model_id,
+            output=str(e),
+            scores={},
+            latency=0.0,
+            status="failed"
+        )
 
 @router.get("/experiments/{experiment_id}")
 def get_experiment_status(experiment_id: int, db: Session = Depends(get_db)):

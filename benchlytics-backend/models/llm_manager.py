@@ -4,10 +4,13 @@ import time
 from typing import Dict, Any, Tuple
 from google import genai
 from openai import AsyncOpenAI
+from dotenv import load_dotenv
 import asyncio
 
+load_dotenv()
+
 class LLMManager:
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self, config_path: str = "config/models.yaml"):
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
             self.models_config = {m["id"]: m for m in config.get("models", [])}

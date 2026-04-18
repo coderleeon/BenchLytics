@@ -2,10 +2,13 @@ from google import genai
 import json
 import yaml
 import os
+from dotenv import load_dotenv
 import re
 
+load_dotenv()
+
 class JudgeEngine:
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self, config_path: str = "config/models.yaml"):
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
             self.judge_model_id = config.get("judge", {}).get("model_id", "gemini-1.5-pro")

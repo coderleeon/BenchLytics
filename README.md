@@ -60,6 +60,17 @@ Instead of relying on fragile string comparisons, Benchlytics utilizes an elite 
 
 ---
 
+## 🛠️ MLOps Pipeline
+
+Benchlytics incorporates production-grade AI engineering patterns beyond its evaluation framework:
+
+- **Docker Containerization**: The FastAPI backend contains an optimized `.dockerignore` and multi-stage-ready `Dockerfile` mapping isolated Python 3.10 environments for immediate scalability.
+- **Continuous Integration (CI/CD)**: GitHub Actions automatically triggers sanity testing and library resolutions on every commit via `.github/workflows/ci.yml`.
+- **Config-Driven Scaling**: All provider assignments and pricing formulas decouple into local `config/models.yaml` allowing zero-code LLM swaps. API Keys evaluate strictly via secure `.env` variable ingestion arrays.
+- **Experiment Tracking**: Every successful generation appends to an immutable JSON tracker (`logs/experiments.json`) capturing the exact `run_id`, active payloads, and evaluation scores for total metric reproducibility.
+
+---
+
 ```text
 Benchlytics/
 ├── benchlytics-backend/       ← FastAPI API & Processing Layer
