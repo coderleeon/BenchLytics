@@ -1,6 +1,9 @@
 # Benchlytics
 
+**Designed for 10k+ requests/sec with batching, caching, and async execution**
+
 > **Benchlytics** is a production-grade LLM benchmarking and evaluation platform. It leverages an autonomous LLM-as-judge architecture to evaluate models across variations, tracking cost, latency, hallucination rates, and confidence scores across a live Next.js metrics dashboard.
+
 
 ---
 
