@@ -83,8 +83,9 @@ async def run_experiment(experiment_id: int, task: str, models: List[str], itera
 
 async def execute_model_evaluation(model_id: str, prompt: str, experiment_id: int, db: Session):
     try:
-        # 1. Generation
-        response_text, token_count, latency = await llm_manager.generate_response(model_id, prompt)
+        # 1. Generation (via InferenceOptimization Layer)
+        from inference.router import InferenceRouter
+        response_text, token_count, latency = await InferenceRouter.process_request(prompt, model_id, client_id=f"exp_{experiment_id}")
         
         # 2. Evaluation
         scores = await judge_engine.evaluate(prompt, response_text)
